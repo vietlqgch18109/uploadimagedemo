@@ -45,7 +45,7 @@ var app = {
         document.querySelector('#pictureTest').addEventListener('change', doFile);
 
         document.querySelector('#testImageBtn').addEventListener('click', doImageTest);
-
+        document.querySelector('#readAll').addEventListener('click', readAll,{once:true});
         initDb();
         function initDb() {
                 let request = indexedDB.open('testPics', dbVersion);
@@ -71,12 +71,14 @@ var app = {
                 var reader = new FileReader();
 //              reader.readAsDataURL(file);
                 reader.readAsBinaryString(file);
-
                 reader.onload = function(e) {
                     //alert(e.target.result);
                     let bits = e.target.result;
+                    var fi = document.getElementById('pictureTest');
                     let ob = {
                         created:new Date(),
+                        fileName:file.name,
+                        fileSize:file.size,
                         data:bits
                     };
 
@@ -93,7 +95,6 @@ var app = {
                     }
                 }
             }
-
             function doImageTest() {
                 console.log('doImageTest');
                 let image = document.querySelector('#testImage');
@@ -107,7 +108,30 @@ var app = {
                     let record = e.target.result;
                     console.log('get success', record);
                     image.src = 'data:image/jpeg;base64,' + btoa(record.data);
+                    console.log('image.src');
                 }
-            }        
+            }       
+            function readAll(){
+                console.log('asdfasdf');
+                var objectStore = db.transaction("cachedForms").objectStore("cachedForms");
+            
+            objectStore.openCursor().onsuccess = function(event) {
+               var cursor = event.target.result;
+               if (cursor) {
+                
+                  $("table tbody").append("<tr><td><input type='checkbox' name='record'></td><td>"  + cursor.value.id + "</td><td>"+ cursor.value.fileName + "</td><td>"+cursor.value.fileSize+"</td><td><img width=100px height=100px src = '"+'data:image/jpeg;base64,' + btoa(cursor.value.data)+"'></img></td></tr>");
+                  cursor.continue();
+               } 
+            };
+            } 
+            $(document).ready(function(){
+            $("#delete").click(function(){
+                $("table tbody").find('input[name="record"]').each(function(){
+                    if($(this).is(":checked")){
+                        $(this).parents("tr").remove();
+                }
+            })
+         })
+         })
     }
 };

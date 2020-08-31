@@ -22,6 +22,7 @@
 <html>
 
 <head>
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
     <meta charset="utf-8" />
     <meta name="format-detection" content="telephone=no" />
     <meta name="msapplication-tap-highlight" content="no" />
@@ -38,94 +39,60 @@
     -->
     <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: 'unsafe-inline' https://ssl.gstatic.com; style-src 'self' 'unsafe-inline'; media-src *" /> -->
 
-    <link rel="stylesheet" type="text/css" href="css/index.css" />
+    <link rel="stylesheet" type="text/css" href="../css/index.css" />
     <title>Hello World</title>
+    <style>
+table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 80%;
+}
+
+td, th {
+  border: 1px solid black;
+  text-align: center;
+  padding: 8px;
+}
+
+tr:nth-child(even) {
+  background-color: #dddddd;
+}
+</style>
 </head>
 
 <body>
     <input type="file" id="pictureTest" capture>
     <h2>Test Image Below</h2>
-    <input type="number" id="recordToLoad"> <button id="testImageBtn">Test</button>
-    <img id="testImage">
+    <input type="number" id="recordToLoad"> <button id="testImageBtn">Test</button><br>
+    <button id="readAll">Read All</button>
+    <button id="delete">Delete Selected Item</button>
+    <br>
+    <h2>HTML Table</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th></th>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Size</th>
+            <th>Picture</th>
+        </tr>
+    </thead>
+    <tbody>
+
+    </tbody>
+</table>
+
+</body>
+</html>
+
     <script type="text/javascript" src="cordova.js"></script>
     <script type="text/javascript" src="js/index.js"></script>
     <script type="text/javascript">
         app.initialize();
-        let db;
-        let dbVersion = 1;
-        let dbReady = false;
-
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('dom content loaded');
-
-            document.querySelector('#pictureTest').addEventListener('change', doFile);
-
-            document.querySelector('#testImageBtn').addEventListener('click', doImageTest);
-
-            initDb();
-        });
-        function initDb() {
-                let request = indexedDB.open('testPics', dbVersion);
-
-                request.onerror = function(e) {
-                    console.error('Unable to open database.');
-                }
-
-                request.onsuccess = function(e) {
-                    db = e.target.result;
-                    console.log('db opened');
-                }
-
-                request.onupgradeneeded = function(e) {
-                    let db = e.target.result;
-                    db.createObjectStore('cachedForms', {keyPath:'id', autoIncrement: true});
-                    dbReady = true;
-                }
-            } 
-            function doFile(e) {
-                console.log('change event fired for input field');
-                let file = e.target.files[0];
-                var reader = new FileReader();
-//              reader.readAsDataURL(file);
-                reader.readAsBinaryString(file);
-
-                reader.onload = function(e) {
-                    //alert(e.target.result);
-                    let bits = e.target.result;
-                    let ob = {
-                        created:new Date(),
-                        data:bits
-                    };
-
-                    let trans = db.transaction(['cachedForms'], 'readwrite');
-                    let addReq = trans.objectStore('cachedForms').add(ob);
-
-                    addReq.onerror = function(e) {
-                        console.log('error storing data');
-                        console.error(e);
-                    }
-
-                    trans.oncomplete = function(e) {
-                        console.log('data stored');
-                    }
-                }
-            }
-
-            function doImageTest() {
-                console.log('doImageTest');
-                let image = document.querySelector('#testImage');
-                var recordToLoad = parseInt(document.querySelector('#recordToLoad').value,10);
-                if(recordToLoad === '') recordToLoad = 1;
-
-                let trans = db.transaction(['cachedForms'], 'readonly');
-                //hard coded id
-                let req = trans.objectStore('cachedForms').get(recordToLoad);
-                req.onsuccess = function(e) {
-                    let record = e.target.result;
-                    console.log('get success', record);
-                    image.src = 'data:image/jpeg;base64,' + btoa(record.data);
-                }
-            }        
+        
+        
     </script>
 </body>
 

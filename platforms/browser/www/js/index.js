@@ -45,7 +45,93 @@ var app = {
         document.querySelector('#pictureTest').addEventListener('change', doFile);
 
         document.querySelector('#testImageBtn').addEventListener('click', doImageTest);
-
+        document.querySelector('#readAll').addEventListener('click', readAll,{once:true});
         initDb();
+        function initDb() {
+                let request = indexedDB.open('testPics', dbVersion);
+
+                request.onerror = function(e) {
+                    console.error('Unable to open database.');
+                }
+
+                request.onsuccess = function(e) {
+                    db = e.target.result;
+                    console.log('db opened');
+                }
+
+                request.onupgradeneeded = function(e) {
+                    let db = e.target.result;
+                    db.createObjectStore('cachedForms', {keyPath:'id', autoIncrement: true});
+                    dbReady = true;
+                }
+            } 
+            function doFile(e) {
+                console.log('change event fired for input field');
+                let file = e.target.files[0];
+                var reader = new FileReader();
+//              reader.readAsDataURL(file);
+                reader.readAsBinaryString(file);
+                reader.onload = function(e) {
+                    //alert(e.target.result);
+                    let bits = e.target.result;
+                    var fi = document.getElementById('pictureTest');
+                    let ob = {
+                        created:new Date(),
+                        fileName:file.name,
+                        fileSize:file.size,
+                        data:bits
+                    };
+
+                    let trans = db.transaction(['cachedForms'], 'readwrite');
+                    let addReq = trans.objectStore('cachedForms').add(ob);
+
+                    addReq.onerror = function(e) {
+                        console.log('error storing data');
+                        console.error(e);
+                    }
+
+                    trans.oncomplete = function(e) {
+                        console.log('data stored');
+                    }
+                }
+            }
+            function doImageTest() {
+                console.log('doImageTest');
+                let image = document.querySelector('#testImage');
+                var recordToLoad = parseInt(document.querySelector('#recordToLoad').value,10);
+                if(recordToLoad === '') recordToLoad = 1;
+
+                let trans = db.transaction(['cachedForms'], 'readonly');
+                //hard coded id
+                let req = trans.objectStore('cachedForms').get(recordToLoad);
+                req.onsuccess = function(e) {
+                    let record = e.target.result;
+                    console.log('get success', record);
+                    image.src = 'data:image/jpeg;base64,' + btoa(record.data);
+                    console.log('image.src');
+                }
+            }       
+            function readAll(){
+                console.log('asdfasdf');
+                var objectStore = db.transaction("cachedForms").objectStore("cachedForms");
+            
+            objectStore.openCursor().onsuccess = function(event) {
+               var cursor = event.target.result;
+               if (cursor) {
+                
+                  $("table tbody").append("<tr><td><input type='checkbox' name='record'></td><td>"  + cursor.value.id + "</td><td>"+ cursor.value.fileName + "</td><td>"+cursor.value.fileSize+"</td><td><img width=100px height=100px src = '"+'data:image/jpeg;base64,' + btoa(cursor.value.data)+"'></img></td></tr>");
+                  cursor.continue();
+               } 
+            };
+            } 
+            $(document).ready(function(){
+            $("#delete").click(function(){
+                $("table tbody").find('input[name="record"]').each(function(){
+                    if($(this).is(":checked")){
+                        $(this).parents("tr").remove();
+                }
+            })
+         })
+         })
     }
 };
